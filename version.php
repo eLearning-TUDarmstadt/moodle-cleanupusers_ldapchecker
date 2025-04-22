@@ -23,7 +23,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version   = 2024062500;     // The current plugin version (Date: YYYYMMDDXX).
+$plugin->version   = 2025042200;     // The current plugin version (Date: YYYYMMDDXX).
 $plugin->requires  = 2016052300;     // Requires 31 Moodle version.
 $plugin->component = 'userstatus_ldapchecker'; // Full name of the plugin (used for diagnostics).
 $plugin->release = 'v1.0-r0';
