@@ -41,6 +41,9 @@ class ldapchecker implements userstatusinterface {
     /** @var array lookuptable for ldap users */
     private $lookup = [];
 
+    /** @var string id of authentication method */
+    private $authtype;
+
     /**
      * This constructor sets timesuspend and timedelete from days to seconds.
      * @throws \dml_exception
@@ -51,6 +54,7 @@ class ldapchecker implements userstatusinterface {
 
         // Calculates days to seconds.
         $this->timedelete = $config->deletetime * 86400;
+        $this->authtype = $config->authtype;
 
         // Only connect to LDAP if we are not in testing case.
         if ($testing === false) {
@@ -111,12 +115,15 @@ class ldapchecker implements userstatusinterface {
     public function get_to_suspend() {
         global $DB;
 
+        $params['authtype'] = $this->authtype;
+
         $users = $DB->get_records_sql(
             "SELECT id, suspended, lastaccess, username, deleted
                 FROM {user}
-                WHERE auth = 'shibboleth'
+                WHERE auth = :authtype
                     AND suspended = 0
-                    AND deleted = 0"
+                    AND deleted = 0",
+            $params
         );
 
         $tosuspend = [];
@@ -149,14 +156,17 @@ class ldapchecker implements userstatusinterface {
     public function get_never_logged_in() {
         global $DB;
 
+        $params['authtype'] = $this->authtype;
+
         $arrayofuser = $DB->get_records_sql(
             "SELECT u.id, u.suspended, u.lastaccess, u.username, u.deleted
                 FROM {user} u
                 LEFT JOIN {tool_cleanupusers} tc ON u.id = tc.id
-                WHERE u.auth = 'shibboleth'
+                WHERE u.auth = :authtype
                     AND u.lastaccess = 0
                     AND u.deleted = 0
-                    AND tc.id IS NULL"
+                    AND tc.id IS NULL",
+            $params
         );
 
         $neverloggedin = [];
@@ -187,18 +197,19 @@ class ldapchecker implements userstatusinterface {
     public function get_to_delete() {
         global $DB;
 
+        $params['authtype'] = $this->authtype;
+        $params['timelimit'] = time() - $this->timedelete;
+
         $users = $DB->get_records_sql(
             "SELECT tca.id, tca.suspended, tca.lastaccess, tca.username, tca.deleted
                 FROM {user} u
                 JOIN {tool_cleanupusers} tc ON u.id = tc.id
                 JOIN {tool_cleanupusers_archive} tca ON u.id = tca.id
-                WHERE u.auth = 'shibboleth'
+                WHERE u.auth = :authtype
                     AND u.suspended = 1
                     AND u.deleted = 0
                     AND tc.timestamp < :timelimit",
-            [
-                'timelimit'  => time() - $this->timedelete,
-            ]
+            $params
         );
 
         $todelete = [];
@@ -230,16 +241,19 @@ class ldapchecker implements userstatusinterface {
     public function get_to_reactivate() {
         global $DB;
 
+        $params['authtype'] = $this->authtype;
+
         $users = $DB->get_records_sql(
             "SELECT tca.id, tca.suspended, tca.lastaccess, tca.username, tca.deleted
                 FROM {user} u
                 JOIN {tool_cleanupusers} tc ON u.id = tc.id
                 JOIN {tool_cleanupusers_archive} tca ON u.id = tca.id
-                WHERE u.auth = 'shibboleth'
+                WHERE u.auth = :authtype
                     AND u.suspended = 1
                     AND u.deleted = 0
                     AND tca.username NOT IN
-                        (SELECT username FROM {user} WHERE username IS NOT NULL)"
+                        (SELECT username FROM {user} WHERE username IS NOT NULL)",
+            $params
         );
 
         $toactivate = [];

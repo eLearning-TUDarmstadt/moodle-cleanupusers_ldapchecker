@@ -43,6 +43,20 @@ if ($hassiteconfig) {
         PARAM_INT
     ));
 
+    // Get installed auth types for choices
+    $plugins = core_plugin_manager::instance()->get_plugins_of_type('auth');
+    $auths = [];
+    foreach ($plugins as $plugin) {
+        $auths[$plugin->name] = $plugin->displayname;
+    }
+    $settings->add(new admin_setting_configselect(
+        'userstatus_ldapchecker/authtype',
+        get_string('authtype', 'userstatus_ldapchecker'),
+        get_string('authtype_desc', 'userstatus_ldapchecker'),
+        null,
+        $auths
+    ));
+
     // LDAP server settings.
     $settings->add(new admin_setting_heading(
         'userstatus_ldapchecker/ldapserversettings',
