@@ -58,7 +58,7 @@ class ldapchecker implements userstatusinterface {
             if (!$ldap) {
                 die("Could not connect to $config->host_url");
             }
-            ldap_set_option($ldap, LDAP_OPT_PROTOCOL_VERSION, $config->ldap_version);
+            ldap_set_option($ldap, LDAP_OPT_PROTOCOL_VERSION, 3);
             $bind = ldap_bind($ldap, $config->bind_dn, $config->bind_pw); // Returns 1 if correct.
 
             if ($bind) {
