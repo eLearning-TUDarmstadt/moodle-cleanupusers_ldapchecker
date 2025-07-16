@@ -75,14 +75,21 @@ class ldapchecker implements userstatusinterface {
                 $result = ldap_get_entries($ldap, $search);
 
                 foreach ($result as $user) {
-                    if (isset($user['cn'])) {
-                        foreach ($user['cn'] as $cn) {
-                            $this->lookup[$cn] = true;
+                    if (isset($user['dn'])) {
+                        $userdn = explode(',', $user['dn']);
+                        if (substr( $userdn[0], 0, 3 ) === "cn=") {
+                            $this->lookup[substr($userdn[0], 3)] = true;
                         }
                     }
                 }
 
                 $this->log("ldap server sent " . count($this->lookup) . " users");
+
+                // Stop if we received 0 users
+                if (count($this->lookup) == 0) {
+                    die("No users found");
+                }
+
             } else {
                 // Abort on failure of ldap binding
                 die("ldap_bind failed");
